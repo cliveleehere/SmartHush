@@ -7,5 +7,5 @@ import dagger.Provides
 object MainFragmentModule {
 
   @Provides
-  fun cameraX(): AudioInterface = FakeAudio()
+  fun audioListener(): AudioListener = FakeAudio()
 }

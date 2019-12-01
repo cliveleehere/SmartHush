@@ -5,9 +5,8 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Toast
 import androidx.fragment.app.Fragment
-import com.rightfromleftsw.smarthush.analyzer.detector.Emotion
+import com.rightfromleftsw.smarthush.R
 import com.rightfromleftsw.smarthush.permissions.PermissionDelegate
 import dagger.android.support.AndroidSupportInjection
 import io.reactivex.android.schedulers.AndroidSchedulers
@@ -19,10 +18,10 @@ import javax.inject.Inject
 class MainFragment: Fragment() {
 
   @Inject
-  lateinit var cameraPermissionsDelegate: PermissionDelegate
+  lateinit var audioPermissionsDelegate: PermissionDelegate
 
   @Inject
-  lateinit var audio: AudioInterface
+  lateinit var audioListener: AudioListener
 
   private val compositeDisposable: CompositeDisposable = CompositeDisposable()
 
@@ -36,11 +35,11 @@ class MainFragment: Fragment() {
       container: ViewGroup?,
       savedInstanceState: Bundle?): View? {
 
-    val view = inflater.inflate(audio.layoutId, container, false)
-    audio.setupAudio(view)
+    val view = inflater.inflate(R.layout.main_fragment, container, false)
+    audioListener.setupAudio()
 
-    if (cameraPermissionsDelegate.isAllowedElseRequest()) {
-      startCamera()
+    if (audioPermissionsDelegate.isAllowedElseRequest()) {
+      startAudio()
     }
 
     return view
@@ -48,8 +47,8 @@ class MainFragment: Fragment() {
 
   override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
     super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-    if (cameraPermissionsDelegate.onRequestPermissionResult(requestCode)) {
-      startCamera()
+    if (audioPermissionsDelegate.onRequestPermissionResult(requestCode)) {
+      startAudio()
     }
   }
 
@@ -58,17 +57,12 @@ class MainFragment: Fragment() {
     compositeDisposable.clear()
   }
 
-  private fun startCamera() {
-    compositeDisposable.add(audio.startAudio()
+  private fun startAudio() {
+    compositeDisposable.add(audioListener.startAudio()
         .subscribeOn(Schedulers.computation())
         .observeOn(AndroidSchedulers.mainThread())
-        .subscribe({ models ->
-          models.firstOrNull {
-            it.emotion == Emotion.HAPPY
-          }?.let {
-            Toast.makeText(requireContext(), "Smile found!", Toast.LENGTH_SHORT).show()
-            Timber.w("Smile found!")
-          }
+        .subscribe({ model ->
+          Timber.i(model.emotion.toString())
         }) {
           Timber.w("startAudio didn't return anything useful")
         })
