@@ -5,6 +5,8 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageButton
+import android.widget.TextView
 import androidx.fragment.app.Fragment
 import com.rightfromleftsw.smarthush.R
 import com.rightfromleftsw.smarthush.permissions.PermissionDelegate
@@ -15,6 +17,7 @@ import io.reactivex.schedulers.Schedulers
 import timber.log.Timber
 import javax.inject.Inject
 
+
 class MainFragment: Fragment() {
 
   @Inject
@@ -24,6 +27,9 @@ class MainFragment: Fragment() {
   lateinit var audioListener: AudioListener
 
   private val compositeDisposable: CompositeDisposable = CompositeDisposable()
+
+  private lateinit var micButton: ImageButton
+  private lateinit var emotionsTextView: TextView
 
   override fun onAttach(context: Context) {
     AndroidSupportInjection.inject(this)
@@ -36,11 +42,20 @@ class MainFragment: Fragment() {
       savedInstanceState: Bundle?): View? {
 
     val view = inflater.inflate(R.layout.main_fragment, container, false)
+
+    micButton = view.findViewById(R.id.micButton)
+    emotionsTextView = view.findViewById(R.id.emotionsTextView)
+
+    micButton.setOnClickListener {
+      if (audioPermissionsDelegate.isAllowedElseRequest()) {
+        startAudio()
+        micButton.isClickable = false
+      }
+    }
+
     audioListener.setupAudio()
 
-    if (audioPermissionsDelegate.isAllowedElseRequest()) {
-      startAudio()
-    }
+    audioPermissionsDelegate.isAllowedElseRequest()
 
     return view
   }
@@ -62,7 +77,7 @@ class MainFragment: Fragment() {
         .subscribeOn(Schedulers.computation())
         .observeOn(AndroidSchedulers.mainThread())
         .subscribe({ model ->
-          Timber.i(model.emotion.toString())
+          emotionsTextView.text = model.toString()
         }) {
           Timber.w("startAudio didn't return anything useful")
         })

@@ -16,4 +16,5 @@
 -->
 <resources>
     <string name="app_name">Smart Hush</string>
+    <string name="emotions">Emotions</string>
 </resources>
